@@ -1,43 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# keeptalking2 - library to interface with internationalization features
-# Copyright (C) 2012-2014  Eugenio "g7" Paolantonio
+# KeepTalking library -- Keyboard mdoule
+# Copyright (C) 2012 Semplice Team. All rights reserved.
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# This file is part of the keeptalking package.
 #
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-#
-# Authors:
-#    Eugenio "g7" Paolantonio <me@medesimo.eu>
-#
-
-from gi.repository import Gio
 
 import fileinput, os, sys
-import keeptalking2.core as core
-
-BUS_NAME = "org.freedesktop.locale1"
+import keeptalking.core as core
 
 class Keyboard:
-	"""
-	The Keyboard class is an interface to the current and supported Keyboard
-	layouts, models and variants.
-	"""
-	
 	def __init__(self, target="/"):
-		"""
-		Initialization.
-		"""
 		
 		self.target = target
 		
@@ -47,45 +20,10 @@ class Keyboard:
 		else:
 			# Older Debian; Ubuntu
 			self.KEYBFILE = os.path.join(self.target, "etc/default/console-setup")
-		
-		# Enter in the bus
-		self.bus_cancellable = Gio.Cancellable()
-		self.bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, self.bus_cancellable)
-		self.Keyboard = Gio.DBusProxy.new_sync(
-			self.bus,
-			0,
-			None,
-			BUS_NAME,
-			"/org/freedesktop/locale1",
-			BUS_NAME,
-			self.bus_cancellable
-		)
-		self.KeyboardProperties = Gio.DBusProxy.new_sync(
-			self.bus,
-			0,
-			None,
-			BUS_NAME,
-			"/org/freedesktop/locale1",
-			"org.freedesktop.DBus.Properties",
-			self.bus_cancellable
-		) # Really we should create a new proxy to get the properties?!
 
 	@property
 	def default_layout(self):
-		"""
-		Returns the current keyboard layout.
-		"""
-		
-		return self.KeyboardProperties.Get('(ss)', BUS_NAME, 'X11Layout')
-
-	@property
-	def default_layout_offline(self):
-		"""
-		Returns the current keyboard layout.
-		
-		This is an 'offline' method, so the target will be respected
-		and DBus will not be used.
-		"""
+		""" Returns the current keyboard layout. """
 		
 		catched = None
 		
@@ -102,20 +40,7 @@ class Keyboard:
 
 	@property
 	def default_model(self):
-		"""
-		Returns the current keyboard model.
-		"""
-		
-		return self.KeyboardProperties.Get('(ss)', BUS_NAME, 'X11Model')
-
-	@property
-	def default_model_offline(self):
-		"""
-		Returns the current keyboard model.
-		
-		This is an 'offline' method, so the target will be respected
-		and DBus will not be used.
-		"""
+		""" Returns the current keyboard model. """
 		
 		catched = None
 		
@@ -132,20 +57,7 @@ class Keyboard:
 	
 	@property
 	def default_variant(self):
-		"""
-		Returns the current keyboard variant.
-		"""
-		
-		return self.KeyboardProperties.Get('(ss)', BUS_NAME, 'X11Variant')
-	
-	@property
-	def default_variant_offline(self):
-		"""
-		Returns the current keyboard variant.
-		
-		This is an 'offline' method, so the target will be respected
-		and DBus will not be used.
-		"""
+		""" Returns the current keyboard variant. """
 		
 		catched = None
 		
@@ -159,39 +71,27 @@ class Keyboard:
 						break
 		
 		return catched	
-	
+		
 	@property
 	def default(self):
-		"""
-		Layout, model, variant, options: all together.
-		"""
+		""" Layout, model, variant, options: all togheter. """
 		
-		return "%(layout)s:%(model)s%(variant)s" % {
-				"layout": self.default_layout,
-				"model": self.default_model,
-				"variant": ":%s" % self.default_variant if self.default_variant else ""
-			}
-	
-	@property
-	def default_offline(self):
-		"""
-		Layout, model, variant, options: all together.
+		layout = self.default_layout
+		model = self.default_model
+		variant = self.default_variant
 		
-		This is an 'offline' method, so the target will be respected
-		and DBus will not be used.
-		"""
+		show = []
+		show.append(layout)
+		show.append(model)
 		
-		return "%(layout)s:%(model)s%(variant)s" % {
-				"layout": self.default_layout_offline,
-				"model": self.default_model_offline,
-				"variant": ":%s" % self.default_variant_offline if self.default_variant_offline else ""
-			}
+		if variant:
+			show.append(variant)
+		
+		return ":".join(show)
 
 	@property
 	def supported_walking(self):
-		"""
-		Returns a dictionary with supported keymaps.
-		"""
+		""" Returns a dictionary with supported keymaps. """
 		
 		supported = {}
 		
@@ -211,9 +111,7 @@ class Keyboard:
 		return supported
 	
 	def supported(self):
-		"""
-		Returns a dictionary with supported models, layout (with variants).
-		"""
+		""" Returns a dictionary with supported models, layout (with variants). """
 		
 		models = {}
 		layouts = {}
@@ -273,9 +171,7 @@ class Keyboard:
 		return models, layouts
 	
 	def supported_variants(self, layout):
-		"""
-		Returns a tuple of available variants for layout.
-		"""
+		""" Returns a tuple of available variants for layout. """
 		
 		available = []
 		
@@ -292,38 +188,16 @@ class Keyboard:
 		return tuple(available)
 	
 	def is_supported(self, layout):
-		"""
-		Returns True if the layout is supported, False if not.
-		"""
+		""" Returns True if layout is supported, False if not. """
 		
 		for typ, lst in self.supported.items():
 			if layout in lst:
 				return True
 		
 		return False
-	
-	def set(self, layout=None, model=None, variant=None):
-		"""
-		Sets the desired layout and model.
-		"""
-		
-		self.Keyboard.SetX11Keyboard(
-			'(ssssbb)',
-			layout if layout else self.default_layout,
-			model if model else self.default_model,
-			variant if variant else self.default_variant,
-			"", # options (not supported yet)
-			True, # convert
-			True # User interaction
-		)
 
-	def set_offline(self, layout=None, model=None, variant=None):
-		"""
-		Sets the desired layout and model.
-		
-		This is an 'offline' method, so the target will be respected
-		and DBus will not be used.
-		"""
+	def set(self, layout=None, model=None, variant=None):
+		""" Sets the desired layout and model. """
 		
 		for line in fileinput.input(self.KEYBFILE,inplace=1):
 			# WARNING: Ugly-ness excess in this for
