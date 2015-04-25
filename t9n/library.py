@@ -50,4 +50,4 @@ def translation_init(APP_NAME, directory="/usr/share/locale"):
 	strings to translate with) to lang.gettext() which will
 	translate them."""
 	
-	return lang.gettext
+	return lang.ugettext
